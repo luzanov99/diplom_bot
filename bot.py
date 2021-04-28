@@ -1,38 +1,42 @@
 import logging
 import settings
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-from glob import glob
-from random import randint, choice
-from telegram import ReplyKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+from handlers import greet_user, send_picture
+from anketa import anketa_start, anketa_name, anketa_dontknow, anketa_profession
+from db import db, save_anketa ,get_or_create_user
+from tasks import take_task, choose_activity
 logging.basicConfig(filename='bot.log', level=logging.INFO)
 
-def greet_user(update, context):
-    print(update)
-    update.message.reply_text('Привет, пользователь! Ты вызвал команду /start', reply_markup=main_keyboard)
-
-def main_keyboard():
-    return ReplyKeyboardMarkup([
-        ['Кнопка', 'Кнопка1'],
-        ['Кнопка2'],
-        ['Кнопка3']
-    ])
-
-def send_picture(update, context):
-    cat_photos_list = glob('images/*.jp*g')
-    cat_pic_filename = choice(cat_photos_list)
-    chat_id = update.effective_chat.id
-    context.bot.send_photo(chat_id=chat_id, photo=open(cat_pic_filename, 'rb'))
+    
 def main():
     # Создаем бота и передаем ему ключ для авторизации на серверах Telegram
     mybot = Updater(settings.API_KEY, use_context=True)
-
+    anketa = ConversationHandler(
+        entry_points=[
+            MessageHandler(Filters.regex('^(Заполнить анкету)$'), anketa_start)
+            ],
+        states={
+            "name": [MessageHandler(Filters.text, anketa_name)],
+            "profession":[MessageHandler(Filters.regex('^(Агент|Кассир|Комендант|Машинист|Статистик)$'), anketa_profession)]
+            },
+        fallbacks=[MessageHandler(Filters.text | Filters.video | Filters.photo | Filters.document | Filters.location, anketa_dontknow)]
+    )
+    task=ConversationHandler(
+    entry_points=[dp.add_handler(MessageHandler(Filters.regex('^(Взять задачу)$'), take_task))],
+    states={
+        "choose":[MessageHandler(Filters.text, choose_activity)],
+    },
+    fallbacks=[MessageHandler(Filters.text | Filters.video | Filters.photo | Filters.document | Filters.location, anketa_dontknow)] 
+    )
+    
     dp = mybot.dispatcher
+    dp.add_handler(anketa)
+    
+    
+
     dp.add_handler(CommandHandler("start", greet_user))
     dp.add_handler(CommandHandler("photo", send_picture))
-    dp.add_handler(MessageHandler(Filters.regex('^(Кнопка)$'), send_picture))
-    dp.add_handler(MessageHandler(Filters.regex('^(Кнопка1)$'), send_picture))
-    dp.add_handler(MessageHandler(Filters.regex('^(Кнопка2)$'), send_picture))
-    dp.add_handler(MessageHandler(Filters.regex('^(Кнопка3)$'), greet_user))
+    
     logging.info("Бот стартовал")
     mybot.start_polling()
     # Запускаем бота, он будет работать, пока мы его не остановим принудительно
