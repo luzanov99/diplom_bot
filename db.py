@@ -39,4 +39,3 @@ def create_task(db, task_data, specialty):
     }
     db.tasks.insert_one(task)
 
-

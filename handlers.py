@@ -2,6 +2,7 @@ from glob import glob
 from utils import main_keyboard, first_meet_keyboard
 from random import randint, choice
 from db import db, get_or_create_user
+from telegram.ext import  ConversationHandler
 def greet_user(update, context):
     user = db.users.find_one({"user_id": update.effective_user.id})
     if not user:
@@ -9,6 +10,7 @@ def greet_user(update, context):
     else:
         user = get_or_create_user(db, update.effective_user, update.message.chat.id)
         update.message.reply_text('Привет, пользователь! Ты вызвал команду /start', reply_markup=main_keyboard())
+    return ConversationHandler.END
 
 
 

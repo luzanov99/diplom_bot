@@ -23,13 +23,12 @@ def anketa_name(update, context):
         ["Комендант"],
         ["Машинист", "Статистик"]
         ]
-        update.message.reply_text(f"Приятно познакомится {user_name} \n Выберите вашу должность в комании ", reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True))
+        update.message.reply_text(f"Приятно познакомится {user_name} \n Выберите вашу должность в комании ", reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True))
         return "profession"
        # return ConversationHandler.END
 
 def anketa_profession(update, context):
     user_profession = update.message.text
-    print("123")
     context.user_data["anketa"]["profession"] = user_profession
     user = get_or_create_user(db, update.effective_user, update.message.chat.id)
     save_anketa(db, user['user_id'], context.user_data['anketa'])
