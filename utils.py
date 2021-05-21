@@ -3,7 +3,9 @@ from telegram import ReplyKeyboardMarkup
 
 def main_keyboard():
     return ReplyKeyboardMarkup([
-        ['Изменить анкету' ,'Взять задачу', 'Посмотреть текущую задачу']
+        ['Я пришел на работу'],
+        ['Изменить анкету' ,'Взять задачу', 'Посмотреть текущую задачу'],
+        ['Перерыв']
     ], resize_keyboard=True)
 
 def first_meet_keyboard():
@@ -11,3 +13,10 @@ def first_meet_keyboard():
         ['Заполнить анкету'],
     ],resize_keyboard=True)
 
+def admin_keyboard():
+    return ReplyKeyboardMarkup([
+        ['Добавить задачу', 'Активные сотрудники'],
+    ],resize_keyboard=True)
+
+
+active_users=list()

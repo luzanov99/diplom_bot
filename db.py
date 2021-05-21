@@ -13,7 +13,9 @@ def get_or_create_user(db, effective_user, chat_id):
             "first_name": effective_user.first_name,
             "last_name": effective_user.last_name,
             "username": effective_user.username,
-            "chat_id": chat_id
+            "chat_id": chat_id,
+            "forfeit":0,
+            "number_of_breaks":0
         }
         db.users.insert_one(user)
     return user
