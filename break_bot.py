@@ -10,7 +10,7 @@ def break_continue(context):
 
 def break_start(update, context):
     try:
-        reply_keyboard=[['Закончить выполнение']]
+        reply_keyboard=[['Закончить перерыв']]
         user = get_or_create_user(db, update.effective_user, update.message.chat.id)
         context.job_queue.run_once(break_continue, 600, context=update.message.chat_id)
         update.message.reply_text(f"Перерыв начался в {datetime.now()}",reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True))

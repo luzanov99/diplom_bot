@@ -4,6 +4,7 @@ from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup
 from datetime import datetime
 from telegram.ext import  ConversationHandler
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
+from datetime import datetime
 import os
 def take_task(update, context):
     reply_keyboard = [
@@ -12,38 +13,52 @@ def take_task(update, context):
     task_count=0
     user = get_or_create_user(db, update.effective_user, update.message.chat.id)
     profession = user["anketa"]["profession"]
-
+    now=datetime.today()
+    date_now=str(now.date())
+    time_now=str(now.time())
     tasks = db.tasks.find({"specialty": profession})
     
-    
-    if  not tasks:
-        update.message.reply_text(f"К сожалению пока задач никаких нет", reply_markup=main_keyboard())
+    #user_name=user["anketa"]["name"]
+    user_find=db.visit_log.find_one({
+        "user_name":user["anketa"]["name"],
+        "date": { '$exists' : True } ,
+        "time": { '$exists' : True }
+    })
+    if not user_find:
+        update.message.reply_text(f"Для получения задачи необходимо отметиться в журнале посещаемости", reply_markup=main_keyboard())
+        return ConversationHandler.END
+    elif "endtime" in user_find:
+        update.message.reply_text(f"Рабочий день закончен", reply_markup=main_keyboard())
+        return ConversationHandler.END
     else:
-        if not "task" in user:
-               
-            for task in tasks:
-                
-                    if not 'executor' in task:
-                        task_name=task["task"]
-                        db.tasks.update_one(
-                            {'_id': task['_id']},
-                            {'$set': {'executor': user["anketa"]["name"]}}
-                        )
-                        db.users.update_one(
-                            {'_id': user['_id']},
-                            {'$set': {'task': task_name}}
-                        )
-                    
-                        update.message.reply_text(f"Новая задача \nВот ее описание:{task_name}", reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True))
-                        return "choose" 
-                    else:
-                        task_count+=1
-            if task_count==tasks.count():
-                update.message.reply_text(f"К сожалению пока задач никаких нет", reply_markup=main_keyboard())
-                return ConversationHandler.END
+        if  not tasks:
+            update.message.reply_text(f"К сожалению пока задач никаких нет", reply_markup=main_keyboard())
         else:
-            update.message.reply_text(f"У вас уже есть задача на выполнении")
-            return ConversationHandler.END
+            if not "task" in user:
+                
+                for task in tasks:
+                    
+                        if not 'executor' in task:
+                            task_name=task["task"]
+                            db.tasks.update_one(
+                                {'_id': task['_id']},
+                                {'$set': {'executor': user["anketa"]["name"]}}
+                            )
+                            db.users.update_one(
+                                {'_id': user['_id']},
+                                {'$set': {'task': task_name}}
+                            )
+                        
+                            update.message.reply_text(f"Новая задача \nВот ее описание:{task_name}", reply_markup=ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=True, resize_keyboard=True))
+                            return "choose" 
+                        else:
+                            task_count+=1
+                if task_count==tasks.count():
+                    update.message.reply_text(f"К сожалению пока задач никаких нет", reply_markup=main_keyboard())
+                    return ConversationHandler.END
+            else:
+                update.message.reply_text(f"У вас уже есть задача на выполнении")
+                return ConversationHandler.END
 
             
 
@@ -76,7 +91,7 @@ def choose_activity(update, context):
 
 def add_photo(update, context):
     reply_keyboard=[['Закончить выполнение','Прикрепить файл-отчет']]
-    update.message.reply_text("Обрабатываю фото")
+    update.message.reply_text("Загружаю файл")
     user = get_or_create_user(db, update.effective_user, update.message.chat.id)
     user_name=user["username"]
     os.makedirs(f'downloads/users/{user_name}', exist_ok=True)

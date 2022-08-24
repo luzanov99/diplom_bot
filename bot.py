@@ -2,7 +2,7 @@ import logging
 import settings
 
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler
-from handlers import greet_user, send_picture, start_work, active_workers, send_file
+from handlers import greet_user,  start_work, active_workers, send_file
 from anketa import anketa_start, anketa_name, anketa_dontknow, anketa_profession
 from db import db, save_anketa ,get_or_create_user
 from tasks import take_task, choose_activity, finish_activity, current_task, task_dontknow, choose_profession_for_task, add_task, adding_task, add_photo, set_user_for_task
@@ -41,9 +41,9 @@ def main():
     )
     break_user = ConversationHandler(
         entry_points=[
-            MessageHandler(Filters.regex('^(Перерыв)$'), break_start)
+            MessageHandler(Filters.regex('^(Начать перерыв)$'), break_start)
         ],
-        states={"finish_break":[MessageHandler(Filters.regex('^(Закончить выполнение)$'), end_break)]
+        states={"finish_break":[MessageHandler(Filters.regex('^(Закончить перерыв)$'), end_break)]
             },
         fallbacks=[MessageHandler(Filters.text | Filters.video | Filters.photo | Filters.document | Filters.location, task_dontknow)]
     )
@@ -64,14 +64,14 @@ def main():
     dp.add_handler(break_user)
     dp.add_handler(new_task)
     dp.add_handler(CommandHandler("start", greet_user))
-    dp.add_handler(MessageHandler(Filters.regex('^(Я пришел на работу)$'), start_work))
+    dp.add_handler(MessageHandler(Filters.regex('^(Отметиться в журнале посещаемости)$'), start_work))
     dp.add_handler(MessageHandler(Filters.regex('^(Активные сотрудники)$'), active_workers))
-    dp.add_handler(CommandHandler("photo", send_picture))
+    #dp.add_handler(CommandHandler("photo", send_picture))
     dp.add_handler(MessageHandler(Filters.photo, send_file))
     
     logging.info("Бот стартовал")
     mybot.start_polling()
-    # Запускаем бота, он будет работать, пока мы его не остановим принудительно
+  
     mybot.idle()
 
 

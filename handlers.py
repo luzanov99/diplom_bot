@@ -9,16 +9,17 @@ import os
 def greet_user(update, context):
     user = db.users.find_one({"user_id": update.effective_user.id})
     if not user:
-        update.message.reply_text('Привет, новый пользователь давай лучше узнаем друг друга!', reply_markup=first_meet_keyboard())
+        update.message.reply_text('Добрый день! Для начала работы необходимо заполнить анкету', reply_markup=first_meet_keyboard())
     elif user["anketa"]["profession"]=="Админ":
-        update.message.reply_text('Привет, пользователь! Ты вызвал команду /start', reply_markup=admin_keyboard())
+        user_name=user["anketa"]["name"]
+        update.message.reply_text(f'Добрый день, {user_name}!', reply_markup=admin_keyboard())
     else:
         user = get_or_create_user(db, update.effective_user, update.message.chat.id)
-        update.message.reply_text('Привет, пользователь! Ты вызвал команду /start', reply_markup=main_keyboard())
+        user_name=user["anketa"]["name"]
+        update.message.reply_text(f'Добрый день, {user_name}!', reply_markup=main_keyboard())
     return ConversationHandler.END
 
-
-
+'''
 def send_picture(update, context):
     user = get_or_create_user(db, update.effective_user, update.message.chat.id)
     cat_photos_list = glob('images/*.jp*g')
@@ -26,9 +27,11 @@ def send_picture(update, context):
     chat_id = update.effective_chat.id
     context.bot.send_photo(chat_id=chat_id, photo=open(cat_pic_filename, 'rb'))
     update.message.reply_text("Привет, пользователь! Ты вызвал команду /start", reply_markup=main_keyboard())
+'''
 
 def start_work(update, context):
     user = get_or_create_user(db, update.effective_user, update.message.chat.id)
+    user_name=user["anketa"]["name"]
     now=datetime.today()
     date_now=str(now.date())
     time_now=str(now.time())
@@ -37,6 +40,7 @@ def start_work(update, context):
         "date": date_now  
     })
     if not user_come:
+       
         user_go = {
                 "user_name": user["anketa"]["name"],
                 "date": date_now,
@@ -44,9 +48,18 @@ def start_work(update, context):
 
             }
         db.visit_log.insert_one(user_go)
-        update.message.reply_text(f"Привет, пользователь! Сегодня ты пришел на работу в {time_now}", reply_markup=main_keyboard())
+        update.message.reply_text(f"Здравствуйте, {user_name}! Время начала смены: {time_now}", reply_markup=main_keyboard())
     else:
-        update.message.reply_text(f"Ты уже отметился сегодня", reply_markup=main_keyboard())
+        if not "endtime" in user_come:
+           
+            db.visit_log.update(
+                        { '_id' : user_come['_id'] },
+                        { '$set': { "endtime":time_now }})
+            update.message.reply_text(f"Приятного отдыха!", reply_markup=main_keyboard())
+        else:
+        
+            update.message.reply_text(f"Приятного отдыха!", reply_markup=main_keyboard())
+            
 
 
 def active_workers(update, context):
